@@ -1,0 +1,123 @@
+this와 PictureSection.this의 차이점을 이해하려면 자바의 내부 클래스와 외부 클래스의 맥락을 이해하는 것이 중요합니다.
+
+this와 PictureSection.this의 차이점
+this는 현재 클래스의 인스턴스를 가리킵니다. 즉, this는 ActionListener 내부 클래스의 인스턴스를 가리키게 됩니다.
+PictureSection.this는 외부 클래스 PictureSection의 인스턴스를 가리킵니다. 이 구문은 내부 클래스에서 외부 클래스의 인스턴스를 참조할 때 사용됩니다.
+내부 클래스에서 외부 클래스의 인스턴스 참조
+내부 클래스의 인스턴스는 외부 클래스의 인스턴스에 대한 참조를 가지고 있습니다. 그러나 내부 클래스 내에서 this를 사용하면 내부 클래스 자체의 인스턴스를 가리키기 때문에, 외부 클래스의 인스턴스를 참조하려면 OuterClassName.this를 사용해야 합니다.
+
+ADD 문제
+add하면 stuff정보가 안뜸 --> AddPanel에서 Stuff정보를 Picture 객체에 추가하는 부분을 명확하게 처리
+-->이전 코드 문제점 : 첫번째 기본 stuffPanel과 추가된 stuffPanels를 혼동. 기본 stuffPanel의 정보를 처리하지 않으면, 추가된 StuffPanle이 없을 경우 첫 번째 stuffPanel의 정보만으로 Stuff를 추가하지 못함.
+-->개선 코드
+기본 stuffPaenl과 추가된 모든 stuffPanels를 명확히 구분하여 처리. 따라서, 첫번째 stuffPanel이 단독으로 있거나, 추가된 stuffPanels가 있을때 모두 올바르게 동작
+stuff추가할때 stuffID 구현사항
+
+More Stuff 구현 --> 아아악 머리 아파..
+
+LOAD문제
+사진이 안뜸! --> 이미지 파일 경로 항상 유의할 것!!!
+애초에 파일에 save할때 전체 경로를 wirte하지말고 image부분부터만 write하게함
+
+확인해야할것 --> 새 파일 선택하면 잘 로드되는지..
+     
+SAVE --> 잘 되는지 확인해야 함
+이미지경로를 write할때가 문제였음 image앞을 어떻게 자르지 고민하다 lastIndexOf를 이용하여 images부분 인덱스를 찾고 substing으로 lastIndexOf앞부터 맨 뒤까지 잘라서 남기고 그걸 파일에 write했다
+
+SEARCH 문제
+nullpointexception --> 내가 잘 해결함 흐하ㅏ하 
+
+andSearch.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                LocalDateTime from = null, to = null;
+                try {
+                    if (!timeFrom.getText().isEmpty()) {
+                        from = LocalDateTime.parse(timeFrom.getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss"));
+                    }
+                    if (!timeTo.getText().isEmpty()) {
+                        to = LocalDateTime.parse(timeTo.getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss"));
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+
+                String tags = imageTagSearch.getText();
+                String comments = imageCommentSearch.getText();
+                String stuffType = stuffSearch.getStuffTypeField().getText();
+                String stuffName = stuffSearch.getStuffNameField().getText();
+                String stuffTags = stuffSearch.getStuffTagsField().getText();
+                String general = generalSearch.getText();
+
+                Picture searchPicture = new Picture();
+                if (!tags.isEmpty()) {
+                    searchPicture.setImageTag(tags);
+                }
+                if (!comments.isEmpty()) {
+                    searchPicture.setImageComment(comments);
+                }
+                Stuff searchStuff = new Stuff();
+                if (!stuffType.isEmpty()) {
+                    searchStuff.setStuffType(stuffType);
+                }
+                if (!stuffName.isEmpty()) {
+                    searchStuff.setStuffName(stuffName);
+                }
+                if (!stuffTags.isEmpty()) {
+                    searchStuff.setStuffTags(stuffTags);
+                }
+                searchPicture.setPictureStuffs(new ArrayList<>());
+                searchPicture.getPictureStuffs().add(searchStuff);
+
+                pictureSection.searchANDUpdate(searchPicture, from, to, general);
+            }
+        });
+위의 코드는 searchStuff 객체를 생성하고, 검색 필드가 비어 있지 않은 경우에만 필드를 설정하고 있습니다. 만약 모든 필드가 비어 있는 경우, 생성된 Stuff 객체의 필드들이 null이 되며, 이로 인해 문제가 발생할 수 있습니다.
+
+검색 시 searchStuff 객체를 항상 생성하지만, 모든 필드가 비어 있는 경우에도 searchStuff를 추가하는 것을 보장해야 합니다. 그렇지 않으면 빈 Stuff 객체가 검색에서 제외될 수 있습니다.
+
+다음은 Stuff 객체를 항상 생성하고, searchPicture에 추가하는 방식으로 수정한 코드입니다.
+andSearch.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        LocalDateTime from = null, to = null;
+        try {
+            if (!timeFrom.getText().isEmpty()) {
+                from = LocalDateTime.parse(timeFrom.getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss"));
+            }
+            if (!timeTo.getText().isEmpty()) {
+                to = LocalDateTime.parse(timeTo.getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss"));
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        String tags = imageTagSearch.getText();
+        String comments = imageCommentSearch.getText();
+        String stuffType = stuffSearch.getStuffTypeField().getText();
+        String stuffName = stuffSearch.getStuffNameField().getText();
+        String stuffTags = stuffSearch.getStuffTagsField().getText();
+        String general = generalSearch.getText();
+
+        Picture searchPicture = new Picture();
+        if (!tags.isEmpty()) {
+            searchPicture.setImageTag(tags);
+        }
+        if (!comments.isEmpty()) {
+            searchPicture.setImageComment(comments);
+        }
+        
+        // 항상 Stuff 객체 생성
+        Stuff searchStuff = new Stuff();
+        searchStuff.setStuffType(stuffType);
+        searchStuff.setStuffName(stuffName);
+        searchStuff.setStuffTags(stuffTags);
+        
+        searchPicture.setPictureStuffs(new ArrayList<>());
+        searchPicture.getPictureStuffs().add(searchStuff);
+
+        pictureSection.searchANDUpdate(searchPicture, from, to, general);
+    }
+});
+
+        
